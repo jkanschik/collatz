@@ -10,31 +10,32 @@
 #include <time.h>
 
 void runUsingAsm(long startValue, long maxValue) {
-    
-    for (long long n = startValue; n < maxValue; n += 2) {
-        
-        __asm {
-            // rbax = rbx = start
-            mov rbx, n
-            mov rax, rbx
-        LOOP:
-            // rax = rax + (rax+1) / 2
-            mov rcx, rax
-            add rcx, 1
-            sar rcx, 1
-            add rax, rcx
-            // cancel if rxa is odd
-        IF_EVEN:
-            test rax, 1
-            jnz IS_ODD
-            // it is even, so shift and jump back
-            sar rax
-            jmp IF_EVEN
-        IS_ODD:
-            // jump back to LOOP if rax is greater than start = rbx
-            cmp rax, rbx
-            jg LOOP
-        }
+    __asm {
+        mov rbx, startValue
+    START:
+        mov rax, rbx
+    LOOP:
+        // rax = rax + (rax+1) / 2
+        mov rcx, rax
+        add rcx, 1
+        sar rcx, 1
+        add rax, rcx
+        // cancel if rxa is odd
+    IF_EVEN:
+        test rax, 1
+        jnz IS_ODD
+        // it is even, so shift and jump back
+        sar rax
+        jmp IF_EVEN
+    IS_ODD:
+        // jump back to LOOP if rax is greater than start = rbx
+        cmp rax, rbx
+        jg LOOP
+        // we now know that rax is less than the start value of rbx
+        // increase rbx and start again:
+        add rbx, 2
+        cmp rbx, maxValue
+        jl START
     }
 }
 
