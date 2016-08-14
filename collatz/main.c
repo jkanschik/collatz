@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <time.h>
 
-void runUsingAsm(long startValue, long maxValue) {
+void runUsingAsm(long long startValue, long long maxValue) {
     __asm {
         mov rbx, startValue
     START:
@@ -39,7 +39,7 @@ void runUsingAsm(long startValue, long maxValue) {
     }
 }
 
-void runUsingAsmWithMul(long startValue, long maxValue) {
+void runUsingAsmWithMul(long long startValue, long long maxValue) {
     __asm {
         mov rbx, startValue
         mov rcx, 3 // used for multiplication with 3
@@ -69,7 +69,7 @@ void runUsingAsmWithMul(long startValue, long maxValue) {
     }
 }
 
-void runWithSimpleC(long startValue, long maxValue) {
+void runWithSimpleC(long long startValue, long long maxValue) {
     for (long long n = startValue; n < maxValue; n += 2) {
         
         long long i = n;
@@ -83,7 +83,7 @@ void runWithSimpleC(long startValue, long maxValue) {
     }
 }
 
-void runWithShift(long startValue, long maxValue) {
+void runWithShift(long long startValue, long long maxValue) {
     for (long long n = startValue; n < maxValue; n += 2) {
         long long i = n;
         while (i >= n) {
@@ -97,25 +97,25 @@ void runWithShift(long startValue, long maxValue) {
 }
 
 int main(int argc, const char * argv[]) {
-    long startValue = 3;
-    long maxValue = 1000000000;
+    long long startValue = 3;
+    long long maxValue = (1ll) << 30;
     clock_t startClock;
     
     startClock = clock();
     runUsingAsm(startValue, maxValue);
-    printf("Took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
+    printf("Method runUsingAsm took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
     
     startClock = clock();
     runUsingAsmWithMul(startValue, maxValue);
-    printf("Took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
+    printf("Method runUsingAsmWithMul took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
     
     startClock = clock();
     runWithShift(startValue, maxValue);
-    printf("Took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
+    printf("Method runWithShift took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
     
     startClock = clock();
     runWithSimpleC(startValue, maxValue);
-    printf("Took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
+    printf("Method runWithSimpleC took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
     
     return 0;
 }
