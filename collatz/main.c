@@ -9,28 +9,18 @@
 #include <stdio.h>
 #include <time.h>
 
-void runUsingAsmSkip4n1(long startValue, long maxValue) {
+void runUsingAsm(long startValue, long maxValue) {
     __asm {
         mov rbx, startValue
     START:
         mov rax, rbx
     LOOP:
-        // Shortcut: if rax = 4n+1, we can set rax to n+1 = (3*rax + 1) / 4
-        // => rax = (rax - 1) >> 2
-    RAX_IS_4n1:
-        test rax, 0b10
-        jnz RAX_IS_4n3
-        sub rax, 1
-        sar rax, 2
-        jmp SHIFT_IF_EVEN
-    RAX_IS_4n3:
-        // Otherwise, rax = 4n+3:
         // rax = rax + (rax+1) / 2
         mov rcx, rax
-        add rcx, 1
+        inc rcx
         sar rcx, 1
         add rax, rcx
-        // Shift as long as rax is still even
+        // cancel if rxa is odd
     SHIFT_IF_EVEN:
         test rax, 1
         jnz IS_ODD
@@ -49,17 +39,17 @@ void runUsingAsmSkip4n1(long startValue, long maxValue) {
     }
 }
 
-void runUsingAsm(long startValue, long maxValue) {
+void runUsingAsmWithMul(long startValue, long maxValue) {
     __asm {
         mov rbx, startValue
+        mov rcx, 3 // used for multiplication with 3
     START:
         mov rax, rbx
     LOOP:
-        // rax = rax + (rax+1) / 2
-        mov rcx, rax
-        add rcx, 1
-        sar rcx, 1
-        add rax, rcx
+        // rax = (3*rax + 1) / 2
+        mul rcx
+        add rax, 1
+        sar rax, 1
         // cancel if rxa is odd
     SHIFT_IF_EVEN:
         test rax, 1
@@ -108,15 +98,15 @@ void runWithShift(long startValue, long maxValue) {
 
 int main(int argc, const char * argv[]) {
     long startValue = 3;
-    long maxValue = 100000000;
+    long maxValue = 1000000000;
     clock_t startClock;
     
     startClock = clock();
-    runUsingAsmSkip4n1(startValue, maxValue);
+    runUsingAsm(startValue, maxValue);
     printf("Took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
     
     startClock = clock();
-    runUsingAsm(startValue, maxValue);
+    runUsingAsmWithMul(startValue, maxValue);
     printf("Took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
     
     startClock = clock();
