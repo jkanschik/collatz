@@ -12,9 +12,12 @@ The programme implements different implementations, which differ significantly i
 4. An assembler version using addition an shift instead of multiplication with 3 (n = n + (n+1)>>2 as in version 2).
 
 A naive (yes, I know it's naive) benchmark on my current MacBook shows the following times to check all number less than 1,000,000,000:
-1. 64,549 ms
-2. 14,561 ms
-3. 8,177 ms
-4. 7,192 ms
+
+| Implementation | Time |
+|----------------|------|
+| Naive C implementation | 64,549 ms |
+| Improved C implementation | 14,561 ms |
+| Assembler with multiplication with 3 | 8,177 ms |
+| Assembler without multiplication with 3 | 7,192 ms |
 
 Actually I was surprised to see the size of the effect of using shift / avoiding multiplication by 3 in the normal c code as well as in assembler. I expected to see a difference, but not this size.
