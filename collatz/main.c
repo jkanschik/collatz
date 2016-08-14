@@ -9,6 +9,46 @@
 #include <stdio.h>
 #include <time.h>
 
+void runUsingAsmSkip4n1(long startValue, long maxValue) {
+    __asm {
+        mov rbx, startValue
+    START:
+        mov rax, rbx
+    LOOP:
+        // Shortcut: if rax = 4n+1, we can set rax to n+1 = (3*rax + 1) / 4
+        // => rax = (rax - 1) >> 2
+    RAX_IS_4n1:
+        test rax, 0b10
+        jnz RAX_IS_4n3
+        sub rax, 1
+        sar rax, 2
+        jmp SHIFT_IF_EVEN
+    RAX_IS_4n3:
+        // Otherwise, rax = 4n+3:
+        // rax = rax + (rax+1) / 2
+        mov rcx, rax
+        add rcx, 1
+        sar rcx, 1
+        add rax, rcx
+        // Shift as long as rax is still even
+    SHIFT_IF_EVEN:
+        test rax, 1
+        jnz IS_ODD
+        // it is even, so shift and jump back
+        sar rax
+        jmp SHIFT_IF_EVEN
+    IS_ODD:
+        // jump back to LOOP if rax is greater than start = rbx
+        cmp rax, rbx
+        jg LOOP
+        // we now know that rax is less than the start value of rbx
+        // increase rbx and start again:
+        add rbx, 2
+        cmp rbx, maxValue
+        jl START
+    }
+}
+
 void runUsingAsm(long startValue, long maxValue) {
     __asm {
         mov rbx, startValue
@@ -21,12 +61,12 @@ void runUsingAsm(long startValue, long maxValue) {
         sar rcx, 1
         add rax, rcx
         // cancel if rxa is odd
-    IF_EVEN:
+    SHIFT_IF_EVEN:
         test rax, 1
         jnz IS_ODD
         // it is even, so shift and jump back
         sar rax
-        jmp IF_EVEN
+        jmp SHIFT_IF_EVEN
     IS_ODD:
         // jump back to LOOP if rax is greater than start = rbx
         cmp rax, rbx
@@ -70,6 +110,10 @@ int main(int argc, const char * argv[]) {
     long startValue = 3;
     long maxValue = 100000000;
     clock_t startClock;
+    
+    startClock = clock();
+    runUsingAsmSkip4n1(startValue, maxValue);
+    printf("Took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
     
     startClock = clock();
     runUsingAsm(startValue, maxValue);
