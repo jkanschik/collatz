@@ -7,28 +7,80 @@
 //
 
 #include <stdio.h>
+#include <time.h>
 
-
-
-int main(int argc, const char * argv[]) {
+void runUsingAsm(long startValue, long maxValue) {
     
-    for (long start = 3; start < 2^30; start += 2) {
-        long n = start;
-        while (n >= start) {
-            n = n + ((n+1) >> 1);
+    for (long long n = startValue; n < maxValue; n += 2) {
+        
+        __asm {
+            // rbax = rbx = start
+            mov rbx, n
+            mov rax, rbx
+        LOOP:
+            // rax = rax + (rax+1) / 2
+            mov rcx, rax
+            add rcx, 1
+            sar rcx, 1
+            add rax, rcx
+            // cancel if rxa is odd
+        IF_EVEN:
+            test rax, 1
+            jnz IS_ODD
+            // it is even, so shift and jump back
+            sar rax
+            jmp IF_EVEN
+        IS_ODD:
+            // jump back to LOOP if rax is greater than start = rbx
+            cmp rax, rbx
+            jg LOOP
+        }
+    }
+}
+
+void runWithSimpleC(long startValue, long maxValue) {
+    for (long long n = startValue; n < maxValue; n += 2) {
+        
+        long long i = n;
+        while (i >= n) {
+            i = 3*i+1;
             
-            while ((n & 1) == 0) {
-                n = n >> 1;
+            while ((i & 1) == 0) {
+                i = i / 2;
             }
         }
-        
-        if ((start % 10000001) == 0) {
-            printf("Starting %d is ok.\n", start);
-        }
-        
     }
+}
+
+void runWithShift(long startValue, long maxValue) {
+    for (long long n = startValue; n < maxValue; n += 2) {
+        long long i = n;
+        while (i >= n) {
+            i = i + ((i+1) >> 1);
+            
+            while ((i & 1) == 0) {
+                i = i >> 1;
+            }
+        }
+    }
+}
+
+int main(int argc, const char * argv[]) {
+    long startValue = 3;
+    long maxValue = 100000000;
+    clock_t startClock;
     
-    // insert code here...
-    printf("Hello, World!\n");
+    startClock = clock();
+    runUsingAsm(startValue, maxValue);
+    printf("Took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
+    
+    startClock = clock();
+    runWithShift(startValue, maxValue);
+    printf("Took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
+    
+    startClock = clock();
+    runWithSimpleC(startValue, maxValue);
+    printf("Took %ld ms.\n", 1000*(clock() - startClock) / CLOCKS_PER_SEC);
+    
     return 0;
 }
